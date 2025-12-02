@@ -1,5 +1,6 @@
 pub mod tree;
 pub mod point;
+pub mod digits_iterator;
 
 use std::io;
 
