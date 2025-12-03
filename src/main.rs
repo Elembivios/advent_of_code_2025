@@ -88,7 +88,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let days = if let Some(day) = args.day {
         day..=day
     } else {
-        1u32..=10u32
+        1u32..=3u32
     };
     let mut duration = Duration::new(0, 0);
 
