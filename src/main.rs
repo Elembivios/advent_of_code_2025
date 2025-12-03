@@ -2,6 +2,7 @@ pub mod utils;
 
 mod day_01;
 mod day_02;
+mod day_03;
 
 use std::{error::Error, fs};
 use structopt::StructOpt;
@@ -101,6 +102,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let solution = match day {
             1 => Solution::new::<day_01::SecretEntrance>(content),
             2 => Solution::new::<day_02::GiftShop>(content),
+            3 => Solution::new::<day_03::Lobby>(content),
             _ => unreachable!(),
         };
 

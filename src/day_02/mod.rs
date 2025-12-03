@@ -18,7 +18,6 @@ impl crate::Advent for GiftShop {
     }
 
     fn part_01(&self) -> String {
-        println!("Ranges: {:?}", self.ranges);
         let mut invalid_ids: Vec<u128> = vec![];
         for range in &self.ranges {
             for num in range.0..=range.1 {
@@ -28,12 +27,10 @@ impl crate::Advent for GiftShop {
                 
             }            
         }
-        println!("Invalid ids: {:?}", invalid_ids);
         invalid_ids.iter().sum::<u128>().to_string()
     }
 
     fn part_02(&self) -> String {
-        println!("Ranges: {:?}", self.ranges);
         let mut invalid_ids: Vec<u128> = vec![];
         for range in &self.ranges {
             for num in range.0..=range.1 {
@@ -43,7 +40,6 @@ impl crate::Advent for GiftShop {
                 
             }            
         }
-        println!("Invalid ids: {:?}", invalid_ids);
         invalid_ids.iter().sum::<u128>().to_string()
     }
 }
@@ -55,14 +51,6 @@ impl GiftShop {
             return true;
         }        
         let part_len = id.len() / 2;
-        // if odd {
-        //     let middle_char = id.chars().skip(part_len).next().unwrap();
-        //     if middle_char != '0' {
-        //         return true
-        //     } else {
-        //         return GiftShop::check_id_valid("0".to_string() + &id);
-        //     }            
-        // }
         let rhs = id.split_off(part_len);
         id != rhs
     }
@@ -126,7 +114,6 @@ mod tests {
     fn test_num_valid_02() {
         assert_eq!(GiftShop::check2("11".to_owned()), false); 
         for i in 11..=22 {
-            println!("Number: {}", i);
             if i == 11 || i == 22 {
                 assert_eq!(GiftShop::check2(i.to_string()), false);
             } else {
