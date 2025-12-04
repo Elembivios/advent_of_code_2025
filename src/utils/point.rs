@@ -369,6 +369,14 @@ impl<V> Grid<V>
         neighbours
     }
 
+    pub fn adjacent_coords(&self, coord: &Coord<usize>) -> Vec<Coord<usize>> {
+        DIRECTIONS
+            .iter()
+            .filter_map(|direction| {
+                self.get_neighbour(coord, direction)
+            }).collect()
+    }
+
     pub fn iter_values(&self) -> impl Iterator<Item=&V> {
         self.map.iter()
     }
