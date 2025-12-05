@@ -1,4 +1,24 @@
 #[allow(dead_code)]
+pub fn digits(mut num: usize) -> impl Iterator<Item = usize> {
+    let mut divisor = 1;
+    while num >= divisor * 10 {
+        divisor *= 10;
+    }
+
+    std::iter::from_fn(move || {
+        if divisor == 0 {
+            None
+        } else {
+            let v = num / divisor;
+            num %= divisor;
+            divisor /= 10;
+            Some(v)
+        }
+    })
+}
+
+
+#[allow(dead_code)]
 pub struct DigitsIterator {
     number: u32,
     num_len: u32,

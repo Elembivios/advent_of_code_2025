@@ -1,5 +1,9 @@
+use std::cmp;
+
+use crate::utils::digits_iterator::{self, digits};
+
 pub struct GiftShop {
-    ranges: Vec<(u128, u128)>
+    ranges: Vec<(usize, usize)>
 }
 
 impl crate::Advent for GiftShop {
@@ -11,14 +15,14 @@ impl crate::Advent for GiftShop {
         let ranges = line
             .split(",")
             .map(|p| {
-                let v: Vec<u128> = p.split("-").map(|id| id.parse::<u128>().unwrap()).collect();
+                let v: Vec<usize> = p.split("-").map(|id| id.parse::<usize>().unwrap()).collect();
                 (v[0], v[1])            
             }).collect();
         Self { ranges: ranges }
     }
 
     fn part_01(&self) -> String {
-        let mut invalid_ids: Vec<u128> = vec![];
+        let mut invalid_ids: Vec<usize> = vec![];
         for range in &self.ranges {
             for num in range.0..=range.1 {
                 if Self::check_id_valid_01(num.to_string()) == false {
@@ -27,11 +31,11 @@ impl crate::Advent for GiftShop {
                 
             }            
         }
-        invalid_ids.iter().sum::<u128>().to_string()
+        invalid_ids.iter().sum::<usize>().to_string()
     }
 
     fn part_02(&self) -> String {
-        let mut invalid_ids: Vec<u128> = vec![];
+        let mut invalid_ids: Vec<usize> = vec![];
         for range in &self.ranges {
             for num in range.0..=range.1 {                
                 if Self::check_id_valid_02(num.to_string()) == false {
@@ -39,7 +43,7 @@ impl crate::Advent for GiftShop {
                 }                
             }            
         }
-        invalid_ids.iter().sum::<u128>().to_string()
+        invalid_ids.iter().sum::<usize>().to_string()
     }
 }
 
@@ -76,11 +80,91 @@ impl GiftShop {
         true
     }
 
+    fn get_prefix_patterns(start: usize, end: usize) -> (usize, Vec<Vec<usize>>) {
+        let start_digits = digits(start).collect();
+        let end_digits = digits(end).collect();
+
+        let common_digits = Self::get_common_digits(&start_digits, &end_digits);
+        let mut patterns: Vec<Vec<usize>> = vec![];
+
+        let max_len = cmp::min(end_digits.len() / 2, common_digits.len());
+        // let max_len = end_digits.len() / 2;
+        let mut max_pattern_len = 0;
+
+        'pattern_len: for pattern_len in 1..=max_len {
+            let mut i = 0;
+            let pattern = &common_digits[i..i + pattern_len];
+            i += pattern_len;
+            while i + pattern_len <= end_digits.len() {
+                let max_index = cmp::min(i + pattern_len, common_digits.len());
+
+                let next_pattern = &common_digits[i..max_index];
+                println!("Next pattern: {:?}, max_index: {}", next_pattern, max_index);
+                if next_pattern.iter().zip(pattern).any(|(lhs, rhs)| lhs != rhs) {
+                    continue 'pattern_len
+                }
+                // if pattern != next_pattern {
+                //     continue 'pattern_len
+                // }
+                i += pattern_len;
+            }
+            max_pattern_len = pattern_len;
+            patterns.push(pattern.to_vec());
+        }
+        (max_pattern_len, patterns)
+    }
+
+    fn vec_to_num(v: Vec<usize>) -> usize {
+        let mut num = 0;
+        for (i, d) in v.iter().enumerate().rev() {
+            num += 10usize.pow(i as u32) * d;
+        }
+        num
+    }
+
+    fn get_common_digits(start: &Vec<usize>, end: &Vec<usize>) -> Vec<usize> {
+        let mut common_digits: Vec<_> = vec![];
+        for (rhs, lhs) in start.iter().zip(end) {
+            if *rhs != *lhs {
+                break;
+            }
+            common_digits.push(*lhs);
+        }
+        common_digits
+    }
+
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_prefix_patterns() {
+        let patterns = GiftShop::get_prefix_patterns(1188511880, 1188511890);
+        println!("Patterns: {:?}", patterns);
+        let patterns = GiftShop::get_prefix_patterns(998, 1012);
+        println!("Patterns: {:?}", patterns);
+        let patterns = GiftShop::get_prefix_patterns(38593856, 38593862);
+        println!("Patterns: {:?}", patterns);
+        let patterns = GiftShop::get_prefix_patterns(2121212118, 2121212121);
+        println!("Patterns: {:?}", patterns);
+        let patterns = GiftShop::get_prefix_patterns(6328350434, 6328506208);
+        println!("Patterns: {:?}", patterns);
+
+        for i in 6328350434usize..=6328506208 {
+            if !GiftShop::check_id_valid_02(i.to_string())  {
+                println!("I --> {}", i);
+            }
+        }
+    }
+    #[test]
+    fn test_common_digits() {
+        let lhs = digits(1188511880).collect();
+        let rhs = digits(1188511890).collect();
+        let v = GiftShop::get_common_digits(&lhs, &rhs);
+        assert_eq!(v, vec![1,1,8,8,5,1,1,8]);
+    }
 
     #[test]
     fn test_num_valid_01() {
