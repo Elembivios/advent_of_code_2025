@@ -1,6 +1,6 @@
 use std::cmp;
 
-use crate::utils::digits_iterator::{self, digits};
+use crate::utils::digits_iterator::digits;
 
 pub struct GiftShop {
     ranges: Vec<(usize, usize)>
@@ -80,6 +80,7 @@ impl GiftShop {
         true
     }
 
+    #[allow(dead_code)]
     fn get_prefix_patterns(start: usize, end: usize) -> (usize, Vec<Vec<usize>>) {
         let start_digits = digits(start).collect();
         let end_digits = digits(end).collect();
@@ -114,6 +115,7 @@ impl GiftShop {
         (max_pattern_len, patterns)
     }
 
+    #[allow(dead_code)]
     fn vec_to_num(v: Vec<usize>) -> usize {
         let mut num = 0;
         for (i, d) in v.iter().enumerate().rev() {
@@ -122,6 +124,7 @@ impl GiftShop {
         num
     }
 
+    #[allow(dead_code)]
     fn get_common_digits(start: &Vec<usize>, end: &Vec<usize>) -> Vec<usize> {
         let mut common_digits: Vec<_> = vec![];
         for (rhs, lhs) in start.iter().zip(end) {
