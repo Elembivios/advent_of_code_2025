@@ -8,11 +8,11 @@ impl crate::Advent for TrashCompactor {
     fn new(data: &str) -> Self
         where 
             Self: Sized {
-        let numbers: Vec<Vec<usize>> = data.lines().enumerate().take_while(|(i, l)| *i < data.lines().count() - 1 ).map(|(i, l)| {
+        let numbers: Vec<Vec<usize>> = data.lines().enumerate().take_while(|(i, _)| *i < data.lines().count() - 1 ).map(|(_, l)| {
             l.split(" ").filter(|s| !s.is_empty()).map(|s| s.parse::<usize>().unwrap()).collect()
         }).collect();
         let signs: Vec<char>= data.lines().rev().next().unwrap().split(" ").filter(|s| !s.is_empty()).map(|s| s.parse::<char>().unwrap()).collect();
-        let lines: Vec<&str> = data.lines().enumerate().take_while(|(i, l)| *i < data.lines().count() - 1 ).map(|(_, l)| l).collect();
+        let lines: Vec<&str> = data.lines().enumerate().take_while(|(i, _)| *i < data.lines().count() - 1 ).map(|(_, l)| l).collect();
         let len = lines.iter().next().unwrap().len();
         let mut cephalopod_numbers: Vec<Vec<usize>> = vec![];
         let mut column_i = 0;
