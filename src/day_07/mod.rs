@@ -29,12 +29,13 @@ impl crate::Advent for Laboratories {
         current_beams.insert(self.start.x);
         for y in 0..self.height {
             let mut new_beams: HashSet<usize> = HashSet::new();
-            for beam in current_beams {
-                let new_beam = Coord::new(beam, y + 1);
-                if self.splitters.contains(&new_beam) {
+            let splitters_in_line: Vec<Coord<usize>> = self.splitters.iter().filter(|s| s.y == y + 1).cloned().collect();
+            for beam_x in current_beams {
+                let new_beam = Coord::new(beam_x, y + 1);
+                if splitters_in_line.contains(&new_beam) {
                     counter_splits += 1;
-                    new_beams.insert(beam - 1);
-                    new_beams.insert(beam + 1);
+                    new_beams.insert(beam_x - 1);
+                    new_beams.insert(beam_x + 1);
                 } else {
                     new_beams.insert(new_beam.x);
                 }
