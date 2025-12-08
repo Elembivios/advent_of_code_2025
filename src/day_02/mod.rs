@@ -81,6 +81,105 @@ impl GiftShop {
     }
 
     #[allow(dead_code)]
+    fn get_ranges_by_digits_len(start: usize, end: usize) -> Vec<(usize, usize)> {
+        let mut current_min: usize = start;
+        let max: Vec<_> = digits(end).collect();
+        let mut current_len = digits(start).count();
+        let mut ranges: Vec<(usize, usize)> = vec![];
+        while current_len < max.len() {
+            let mut new_max = 0;
+            for i in 0..current_len {
+                new_max += 9 * 10usize.pow(i as u32);
+            }
+            ranges.push((current_min, new_max));
+            current_min = 10usize.pow(current_len as u32);
+            current_len += 1;            
+        }
+        ranges.push((current_min, end));
+        ranges
+    }
+
+    // fn get_possible_patterns(start: usize, end: usize) {
+    //     let ranges_by_len = Self::get_ranges_by_digits_len(start, end);
+    //     for (start, end) in ranges_by_len {
+    //         let start_digits: Vec<_> = digits(start).collect();
+    //         let end_digits: Vec<_> = digits(end).collect();
+    //         let mut patterns: Vec<Vec<usize>> = vec![];            
+
+    //         for i in 0..start_digits.len() {
+    //             let min_num_digits: Vec<_> = start_digits[0..=i].iter().cloned().collect();
+    //             let max_num_digits: Vec<_> = end_digits[0..=i].iter().cloned().collect();
+    //             let min_num = Self::vec_to_num(min_num_digits);
+    //             let max_num = Self::vec_to_num(max_num_digits);
+    //             let mut new_patterns: Vec<Vec<usize>> = vec![];
+    //             if i == 0 {
+    //                 for new_d in 0..=9 {
+    //                     new_patterns.push(vec![new_d]);
+    //                 }
+    //             } else {                    
+    //                 for new_d in 0..=9 {
+    //                     for pattern in &patterns {                                                
+    //                         let mut new_pattern = pattern.clone();
+    //                         new_pattern.push(new_d);
+    //                         let new_num = Self::vec_to_num(new_pattern);
+    //                         if (min_num..=max_num).contains(&new_num) {
+
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //             patterns = new_patterns;
+                
+
+    //         }
+    //         for (i, (min_d, max_d)) in start_digits.iter().zip(end_digits).enumerate() {
+    //             let mut new_patterns: Vec<Vec<usize>> = vec![];
+    //             for pattern in &patterns {
+    //                 for new_d in 0..=9 {
+    //                     let mut new_pattern = pattern.clone();
+    //                     new_pattern.push(new_d);
+                        
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+
+
+    // fn check_pattern_valid(prefix_pattern: Vec<usize>, start: usize, end: usize) -> bool {
+    //     let pattern_len = prefix_pattern.len();
+    //     let range = start..end;
+    //     let start_digits = digits(start);
+    //     let end_digits = digits(end);
+    //     let digit_lengths: Vec<usize> = (start_digits.count()..end_digits.count()).filter(|l| l % pattern_len == 0).collect();
+    //     for digit_len in digit_lengths {
+    //         let mul = digit_len / pattern_len;
+    //         let pattern = 
+    //     }
+    //     true
+    // }
+
+    #[allow(dead_code)]
+    fn check_ids(&self) -> String {
+        let mut invalid_ids: Vec<usize> = vec![];
+        for range in &self.ranges {
+            let (max_patterns_i, _prefix_patterns) = GiftShop::get_prefix_patterns(range.0, range.1);
+            if max_patterns_i == 0 {
+                for num in range.0..=range.1 {                    
+                    if Self::check_id_valid_02(num.to_string()) == false {
+                        invalid_ids.push(num);
+                    }                
+                }            
+            } else {
+                // for prefix_pattern in prefix_patterns {
+
+                // }
+            }            
+        }
+        invalid_ids.iter().sum::<usize>().to_string()
+    }
+
+    #[allow(dead_code)]
     fn get_prefix_patterns(start: usize, end: usize) -> (usize, Vec<Vec<usize>>) {
         let start_digits = digits(start).collect();
         let end_digits = digits(end).collect();
@@ -98,15 +197,11 @@ impl GiftShop {
             i += pattern_len;
             while i + pattern_len <= end_digits.len() {
                 let max_index = cmp::min(i + pattern_len, common_digits.len());
-
                 let next_pattern = &common_digits[i..max_index];
                 println!("Next pattern: {:?}, max_index: {}", next_pattern, max_index);
                 if next_pattern.iter().zip(pattern).any(|(lhs, rhs)| lhs != rhs) {
                     continue 'pattern_len
                 }
-                // if pattern != next_pattern {
-                //     continue 'pattern_len
-                // }
                 i += pattern_len;
             }
             max_pattern_len = pattern_len;
@@ -141,6 +236,25 @@ impl GiftShop {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test] 
+    fn test_ranges_by_digits_len() {
+        let ranges = GiftShop::get_ranges_by_digits_len(1188511880, 1188511890);
+        println!("Ranges: {:?}", ranges);
+        assert_eq!(ranges, vec![(1188511880, 1188511890)]);
+        let ranges = GiftShop::get_ranges_by_digits_len(998, 1012);    
+        println!("Ranges: {:?}", ranges);
+        assert_eq!(ranges, vec![(998, 999), (1000, 1012)]);
+        let ranges = GiftShop::get_ranges_by_digits_len(998, 10120);
+        println!("Ranges: {:?}", ranges);
+        assert_eq!(ranges, vec![(998, 999), (1000, 9999), (10000, 10120)]);
+        let ranges = GiftShop::get_ranges_by_digits_len(999, 1012);    
+        println!("Ranges: {:?}", ranges);
+        assert_eq!(ranges, vec![(999, 999), (1000, 1012)]);
+        let ranges = GiftShop::get_ranges_by_digits_len(1000, 1012);    
+        println!("Ranges: {:?}", ranges);
+        assert_eq!(ranges, vec![(1000, 1012)]);
+    }
 
     #[test]
     fn test_prefix_patterns() {
