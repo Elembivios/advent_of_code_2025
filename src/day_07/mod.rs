@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use crate::utils::point::Coord;
+use crate::utils::coordinate_system::cartesian::Coord;
 
 pub struct Laboratories {
     splitters: Vec<Coord<usize>>,

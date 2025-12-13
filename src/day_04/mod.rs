@@ -1,4 +1,4 @@
-use crate::utils::point::Grid;
+use crate::utils::coordinate_system::cartesian::Grid;
 
 pub struct PrintingDepartment {
     grid: Grid<char>

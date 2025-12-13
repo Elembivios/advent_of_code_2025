@@ -1,256 +1,11 @@
-use std::fmt::{self, Display};
-use std::cmp::Ordering;
-use std::ops::{Add, Sub, AddAssign, SubAssign};
-use anyhow::{Error, anyhow};
-use funty::Signed;
+use std::fmt;
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Coord<T> {
-    pub x: T,
-    pub y: T
-}
-
-impl<T> Coord<T> {
-    pub fn new(x: T, y: T) -> Self {
-        Coord { x, y }
-    }
-
-    pub fn get<'a>(&'a self, axis: &Axis) -> &'a T {
-        match axis {
-            Axis::X => &self.x,
-            Axis::Y => &self.y
-        }
-    }
-
-    pub fn get_mut<'a>(&'a mut self, axis: &Axis) -> &'a mut T {
-        match axis {
-            Axis::X => &mut self.x,
-            Axis::Y => &mut self.y
-        }
-    }
-}
-
-impl<T> Coord<T> 
-where
-    T: Signed
-{
-    pub fn manhattan_distance(&self, other: &Self) -> T {
-        (self.x - other.x).abs() + (self.y - other.y).abs()
-    }    
-}
-
-impl<T> Coord<T>
-where
-    T: num::Integer + Copy
-{
-    pub fn get_neighbour(&self, direction: &Direction) -> Self {
-        match direction {
-            Direction::N => Coord::new(self.x, self.y + num::one()),
-            Direction::NE => Coord::new(self.x + num::one(), self.y + num::one()),
-            Direction::E => Coord::new(self.x + num::one(), self.y),
-            Direction::SE => Coord::new(self.x + num::one(), self.y - num::one()),
-            Direction::S => Coord::new(self.x, self.y - num::one()),
-            Direction::SW => Coord::new(self.x - num::one(), self.y - num::one()),
-            Direction::W => Coord::new(self.x - num::one(), self.y),
-            Direction::NW => Coord::new(self.x - num::one(), self.y + num::one()),
-        }
-    }
-}
-
-impl<T: Add<Output = T>> Add for Coord<T> {
-    type Output = Self;
-    fn add(self, rhs: Self) -> Self::Output {
-        Coord::new(self.x + rhs.x, self.y + rhs.y)
-    }
-}
-
-impl<T: AddAssign> AddAssign for Coord<T> {
-    fn add_assign(&mut self, rhs: Self) {
-        self.x += rhs.x;
-        self.y += rhs.y
-    }
-}
-
-impl<T: SubAssign> SubAssign for Coord<T>
-where 
-    T: num::Signed
-{
-    fn sub_assign(&mut self, rhs: Self) {
-        self.x -= rhs.x;
-        self.y -= rhs.y;
-    }
-}
-
-impl<T: Sub<Output = T>> Sub for Coord<T> {
-    type Output = Self;
-    fn sub(self, rhs: Self) -> Self::Output {
-        Coord::new(self.x - rhs.x, self.y - rhs.y)
-    }
-}
-
-impl<T> fmt::Display for Coord<T> 
-where T: fmt::Display {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "({}, {})", self.x, self.y)
-    }
-}
-
-impl<T> fmt::Debug for Coord<T> 
-where T: fmt::Debug
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "C({:?}, {:?})", self.x, self.y)
-    }
-}
-
-impl<T: Ord> Ord for Coord<T> {
-    fn cmp(&self, other: &Self) -> Ordering {
-        let y_cmp = self.y.cmp(&other.y);
-        match y_cmp {
-            Ordering::Equal => {
-                self.x.cmp(&other.x)
-            },
-            _ => y_cmp
-        }
-    }
-}
-
-impl<T: PartialOrd + Ord> PartialOrd for Coord<T> {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl<T> From<&Direction> for Coord<T>
-where 
-    T: num::Signed
-{
-    fn from(direction: &Direction) -> Self {
-        match direction {
-            Direction::N  => Coord::new( T::zero(), T::one()), 
-            Direction::E  => Coord::new( T::one(),  T::zero()),
-            Direction::S  => Coord::new( T::zero(),-T::one()),
-            Direction::W  => Coord::new(-T::one(),  T::zero()),
-            Direction::NE => Coord::new( T::one(),  T::one()),
-            Direction::NW => Coord::new(-T::one(),  T::one()),
-            Direction::SE => Coord::new( T::one(), -T::one()),
-            Direction::SW => Coord::new(-T::one(), -T::one()),
-        }
-    }
-}
-
-impl<T> From<(T, T)> for Coord<T>
-{
-    fn from(tuple: (T, T)) -> Self {
-        Coord::new( tuple.0, tuple.1 )
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Direction { 
-    N, E, S, W,
-    NE, NW, SE, SW
-}
-
-impl TryFrom<&str> for Direction {
-    type Error = Error;
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        match value {
-            "N" => Ok(Direction::N),
-            "NE" => Ok(Direction::NE),
-            "E" => Ok(Direction::E),
-            "SE" => Ok(Direction::SE),
-            "S" => Ok(Direction::S),
-            "SW" => Ok(Direction::SW),
-            "W" => Ok(Direction::W),
-            "NW" => Ok(Direction::NW),
-            _ => Err(anyhow!["Invalid value for direction `{}`", value])
-        }
-    }
-}
-
-impl fmt::Display for Direction {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match self {
-            Direction::N => "N",
-            Direction::NE => "NE",
-            Direction::E => "E",
-            Direction::SE => "SE",
-            Direction::S => "S",
-            Direction::SW => "SW",
-            Direction::W => "W",
-            Direction::NW => "NW"
-        };
-        write!(f, "{}", s)
-    }
-}
-
-pub const TOUCHING_DIRECTIONS: [Direction; 4] = [
-    Direction::N, Direction::E, Direction::S, Direction::W
-];
-
-pub const DIRECTIONS: [Direction; 8]  = [
-    Direction::N, Direction::NE, Direction::E, Direction::SE,
-    Direction::S, Direction::SW, Direction::W, Direction::NW
-];
-
-impl Direction {
-    pub fn affected_axes(&self) -> Vec<Axis> {        
-        match self {
-            Direction::N | Direction::S => vec![Axis::Y],
-            Direction::W | Direction::E => vec![Axis::X],
-            _ => vec![Axis::X, Axis::Y]
-        }
-    }
-
-    pub fn rotate(&self, degrees: isize) -> Self {
-        if degrees % 45 != 0 {
-            panic!("Invalid value for rotation degrees ({}). Degrees need to be in 45 steps (divisible by 45)", degrees);
-        }
-        let rotations: isize = degrees / 45;
-        let index = DIRECTIONS.iter().position(|d| d == self).unwrap() as isize;
-        let new_index = (index + rotations).rem_euclid(DIRECTIONS.len() as isize) as usize;
-        DIRECTIONS[new_index]
-    }
-}
-
-#[derive(Copy, Clone, Debug)]
-pub enum Axis { X, Y }
-
-impl Axis {
-    pub fn other(&self) -> Self {
-        match self {
-            Axis::X => Axis::Y,
-            Axis::Y => Axis::X
-        }
-    }
-}
+use super::coord::Coord;
+use super::point::Point;
+use super::direction::{Direction, DIRECTIONS, TOUCHING_DIRECTIONS};
+use super::axis::Axis;
 
 
-#[derive(PartialEq, Eq, Debug, Hash, Clone)]
-pub struct Point<T, U> {
-    pub coord: Coord<T>,
-    pub value: U
-}
-
-impl<T, U> Point<T, U> {
-    pub fn new(x: T, y: T, value: U) -> Self {
-        Point { coord: Coord::new(x, y), value }
-    }
-
-    pub fn from_coord(coord: Coord<T>, value: U) -> Self {
-        Point { coord, value }
-    }
-}
-
-impl<T, U> fmt::Display for Point<T, U> 
-where
-    U: Display
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.value)
-    }
-}
 
 #[derive(Clone)]
 pub struct Grid<V> {
@@ -453,7 +208,7 @@ where V: Copy
 
 impl<V> Grid<V> 
 where 
-    V: Display
+    V: fmt::Display
 {
     pub fn display_with_points(&self, points: Vec<Coord<usize>>, display_char: char) {
         print!("\n");
@@ -474,7 +229,7 @@ where
 
 impl<V> fmt::Display for Grid<V> 
 where
-    V: Display
+    V: fmt::Display
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "\n")?;
@@ -490,11 +245,10 @@ where
 }
 
 
+
 // Endles iterator of the grid in specified direction
 // When it gets to the edge it jumps to the other side and 
 // continues iterating in that direction.
-
-
 pub struct GridDirectionIterator {
     height: usize,
     width: usize,
@@ -560,6 +314,7 @@ impl Iterator for GridWrappedDirectionIterator {
 }
 
 
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -573,44 +328,7 @@ mod tests {
         Grid::new(map)
     }
 
-    #[test]
-    fn test_direction_rotation() {
-        use Direction::*;
-
-        assert_eq!(N.rotate(90), E);
-        assert_eq!(N.rotate(-90), W);
-        assert_eq!(N.rotate(180), S);
-        assert_eq!(N.rotate(-180), S);
-        assert_eq!(N.rotate(-45), NW);
-        assert_eq!(N.rotate(45), NE);
-        assert_eq!(N.rotate(135), SE);
-        assert_eq!(N.rotate(-135), SW);
-        assert_eq!(N.rotate(360), N);
-
-        assert_eq!(S.rotate(90), W);
-        assert_eq!(S.rotate(-90), E);
-
-    }
-
-    #[test]
-    fn test_coord_neighbours() {
-        let c = Coord::new(0, 0);
-        let neighbours: Vec<_> = DIRECTIONS.iter().map(|dir| {
-            c.get_neighbour(dir)
-        }).collect();  
-        assert_eq!(neighbours, vec![
-            Coord::new(0, 1),
-            Coord::new(1, 1),
-            Coord::new(1, 0),
-            Coord::new(1, -1),
-            Coord::new(0, -1),
-            Coord::new(-1, -1),
-            Coord::new(-1, 0),
-            Coord::new(-1, 1),
-        ])
-    }
-
-    #[test]
+     #[test]
     fn test_contains() {
         let grid = construct_grid();
         println!("{}", grid);

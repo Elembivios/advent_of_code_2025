@@ -1,6 +1,6 @@
 pub mod tree;
-pub mod point;
 pub mod digits_iterator;
+pub mod coordinate_system;
 
 use std::io;
 

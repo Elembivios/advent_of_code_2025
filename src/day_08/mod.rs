@@ -20,7 +20,7 @@ impl crate::Advent for Playground {
                 distances.push((distance, i, j));
             }
         }
-        distances.sort_by_key(|d| d.0);
+        distances.sort_unstable_by_key(|d| d.0);
 
         let to_connect = if junkctions.len() < 100 {
             10
@@ -77,7 +77,7 @@ impl crate::Advent for Playground {
         }
 
         let mut circuts_by_size: Vec<usize> = circuts.into_iter().map(|c| c.len()).collect();
-        circuts_by_size.sort();
+        circuts_by_size.sort_unstable();
 
         let mul = circuts_by_size.into_iter().rev().take(3).fold(1, |res, a| res * a);
         mul.to_string()
