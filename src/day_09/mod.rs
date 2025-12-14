@@ -1,4 +1,4 @@
-use crate::utils::coordinate_system::cartesian::{Coord, Direction};
+use crate::utils::coordinate_system::cartesian::{Coord, Axis};
 
 pub struct MovieTheater {
     red_tiles: Vec<Coord<usize>>
@@ -31,129 +31,129 @@ impl crate::Advent for MovieTheater {
     }
 
     fn part_02(&self) -> String {
-        // let grid = EndlessGrid::new(self.red_tiles.clone());
-        // println!("Grid: {}", grid); 
-        // let center = self.get_center();
-        let path = self.construct_path();
-
-        let mut areas: Vec<(usize, usize, usize)> = vec![];
+        let mut path = self.red_tiles.clone();
+        path.push(self.red_tiles.iter().next().unwrap().clone());
+        let mut max_area = 0;
         for (i, lhs) in self.red_tiles.iter().enumerate() {
             'search: for (j, rhs) in self.red_tiles.iter().enumerate().skip(i + 1) {
+                if lhs.x == rhs.x || lhs.y == rhs.y {
+                    continue;
+                }
                 let (min_x, max_x) = Self::minmax(lhs.x, rhs.x);
                 let (min_y, max_y) = Self::minmax(lhs.y, rhs.y);
-
-                let center = Coord::new((max_x - min_x) / 2, (max_y - min_y) / 2);
-                
-
-                let mut on_edge: Vec<(_, _, Direction)> = vec![];
-                for (z, middle) in self.red_tiles.iter().enumerate() {
+                            
+                for (z, c) in self.red_tiles.iter().enumerate() {
                     if z == i || z == j {
                         continue;
                     }
-
-                    if middle.x < min_x || middle.x > max_x || middle.y < min_y || middle.y > max_y {
-                        continue;
-                    }
-
-                    if middle.x == min_x {
-                        let came_from = if lhs.x == min_x { lhs } else { rhs };                        
-                        on_edge.push((middle, came_from, Direction::W));
-                    } else if middle.x == max_x {
-                        let came_from = if lhs.x == max_x { lhs } else { rhs };                        
-                        on_edge.push((middle, came_from, Direction::E));
-                    } else if middle.y == min_y {
-                        let came_from = if lhs.y == min_y { lhs } else { rhs };                        
-                        on_edge.push((middle, came_from, Direction::N));
-                    } else if middle.y == max_y {
-                        let came_from = if lhs.y == max_y { lhs } else { rhs };                        
-                        on_edge.push((middle, came_from, Direction::S));                                
-                    } else {
-                        println!("In middle. {} -> {} | {}", lhs, rhs, middle);
-                        continue 'search;   
+                    let between_x = c.x > min_x && c.x < max_x;
+                    let between_y = c.y > min_y && c.y < min_y;
+                    if between_x && between_y {
+                        continue 'search;
                     }
                 }
 
-                for (middle, came_from, edge) in on_edge {
-                    let next = self.red_tiles.iter()
-                        .filter(|other| other.x == middle.x || other.y == middle.y)
-                        .filter(|other| !(*other == came_from || *other == middle))
-                        .next().unwrap();
-                    let ok = match edge {
-                        Direction::E => next.x > middle.x,
-                        Direction::W => next.x < middle.x,
-                        Direction::S => next.y > middle.y,
-                        Direction::N => next.y < middle.y,
-                        _ => unreachable!("Direction not reachable")
-                    };
-                    if !ok {
-                        println!("Not ok. {} -> {} | {} -> {} -> {}", lhs, rhs, came_from, middle, next);
-                        continue 'search
+                for part in path.windows(2) {
+                    let p1 = part[0];
+                    let p2 = part[1];
+                    if p1 == *lhs || p2 == *lhs || p1 == *rhs || p2 == *rhs {
+                        continue;
                     }
-                }  
+
+                    let (same_axis, diff_axis) = if p1.x == p2.x {
+                        (Axis::X, Axis::Y)
+                    } else {
+                        assert_eq!(p1.y, p2.y);
+                        (Axis::Y, Axis::X)
+                    };
+                                        
+                    let other_val = *p1.get(&same_axis);
+                    
+                    let in_between1 = match same_axis {
+                        Axis::X => {
+                            min_x <= other_val && other_val <= max_x 
+                        },
+                        Axis::Y => {
+                            min_y <= other_val && other_val <= max_y
+                        }
+                    };
+
+                    if !in_between1 {
+                        continue;
+                    }
+
+                    let (minp, maxp) = Self::minmax(*p1.get(&diff_axis), *p2.get(&diff_axis));
+                    
+                    let crosses = match same_axis {
+                        Axis::X => {
+                            minp < max_y && maxp > min_y
+                        },
+                        Axis::Y => {
+                            minp < max_y && maxp > min_y
+                        }
+                    };
+                    if crosses {
+                        continue 'search;
+                    }
+                }
+
+                let lhs_corner = Coord::new(lhs.x, rhs.y);
+                let rhs_corner = Coord::new(rhs.x, lhs.y);
+                if !(Self::coord_in_shape(&lhs_corner, &path) && Self::coord_in_shape(&rhs_corner, &path)) {
+                    continue 'search;
+                }
 
                 let area = Self::area(lhs, rhs);
-                println!("Ok. {} -> {} | {}", lhs, rhs, area);
-                areas.push((area, i, j));
-            }
-            break;
+                if area > max_area {
+                    max_area = area;
+                }
+            }            
         }
-
-        println!("Areas: {:?}", areas);
-        2.to_string()
+        max_area.to_string()
     }
 }
 
 impl MovieTheater {
-    pub fn get_center(&self) -> Coord<usize> {
-        let mut min_x = usize::MAX;
-        let mut max_x = usize::MIN;
-        let mut min_y = usize::MAX;
-        let mut max_y = usize::MIN;
-
-        for coord in &self.red_tiles {
-            if coord.x > max_x {
-                max_x = coord.x;
-            } else if coord.x < min_x {
-                min_x = coord.x;
+    pub fn intersects_with_section(start: &Coord<usize>, lhs: Coord<usize>, rhs: Coord<usize>) -> bool{
+        if lhs.x == rhs.x {
+            // Straight line
+            if start.x != lhs.x {
+                return false;
             }
-            if coord.y > max_y {
-                max_y = coord.y;
-            } else if coord.y < min_y {
-                min_y = coord.y;
+            if lhs.y >= start.y || rhs.y >= start.y {
+                return true;
+            } else {
+                return false;
             }
         }
+        assert_eq!(lhs.y, rhs.y, "Failed {} - {}", lhs, rhs);
 
-        Coord::new((max_x - min_x) / 2, (max_y - min_y) / 2)
+        if lhs.y <= start.y {
+            return false;
+        }
 
+        let (min_x, max_x) = MovieTheater::minmax(lhs.x, rhs.x);
+        if (min_x - 1..=max_x).contains(&start.x) {
+            return true;
+        }
+        false
     }
 
-    pub fn construct_path(&self) -> Vec<Coord<usize>> {
-        let mut min_x = &Coord::new(usize::MAX, usize::MAX);
-        for c in &self.red_tiles {
-            if c.x < min_x.x {
-                min_x = c
+    pub fn coord_in_shape(c: &Coord<usize>, path: &Vec<Coord<usize>>) -> bool {
+        let mut intersect_count = 0;
+        for window in path.windows(2) {
+            let lhs = window[0];
+            let rhs = window[1];
+            if MovieTheater::intersects_with_section(c, lhs, rhs) {
+                intersect_count += 1;
             }
         }
-        let mut current = min_x;
-        let mut previous: Option<&Coord<usize>> = None;
-        let mut path: Vec<Coord<usize>> = vec![];
-        while path.len() < self.red_tiles.len() {            
-            let next = self.find_next_on_path(previous, current);
-            if previous.is_some() {
-                path.push(previous.unwrap().clone())
-            }
-            previous = Some(current);
-            current = next;                        
-        }
-        path
-    }
 
-    pub fn find_next_on_path(&self, previous: Option<&Coord<usize>>, current: &Coord<usize>) -> &Coord<usize> {
-        let next = self.red_tiles.iter()
-            .filter(|other| other.x == current.x || other.y == current.y)
-            .filter(|other| !((previous.is_some() && *other == previous.unwrap()) || *other == current))
-            .next().unwrap();
-        next
+        if intersect_count % 2 == 0 {
+            false
+        } else {
+            true
+        }
     }
 
     pub fn minmax(lhs: usize, rhs: usize) -> (usize, usize) {
